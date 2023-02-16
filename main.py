@@ -26,7 +26,11 @@ async def on_ready():
 
 @bot.command(help="Envia o link para o repositório contendo o código fonte do bot.")
 async def source(ctx):
-    await ctx.send("Link do repositório: https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot")
+    embed = discord.Embed(title="Link do repositório no github")
+    embed.url = "https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot"
+    embed.description = "https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot"
+    embed.set_image(url="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png")
+    await ctx.send(embed=embed)
 
 
 @bot.command(help="Envia as informações do autor do bot.")
