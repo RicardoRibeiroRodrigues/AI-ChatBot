@@ -4,12 +4,12 @@ import asyncio
 import re
 import datetime
 import json
-from .BotExceptions import InvalidCrypto
+from .BotExceptions import InvalidCrypto, FetchError
 
 class ApiInterface:
     BASE_URL = 'https://api.coincap.io/v2/assets'
     
-    def __init__(self, api_key) -> None:
+    async def __init__(self, api_key) -> None:
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "Accept": "application/json",
@@ -37,14 +37,20 @@ class ApiInterface:
         fig = go.Figure(data=go.Scatter(x=x, y=y))
 
         fig.update_layout(
-            # template='plotly_dark',
-            # plot_bgcolor='rgba(60, 60, 60, 1)',
             title=f'{asset_id.capitalize()} price over time',
             xaxis_title='Date',
-            yaxis_title='Price [USD]'
+            yaxis_title='Price [USD]',
+            title_x=0.5,
+            template='plotly_dark',
+            plot_bgcolor='black',
+            paper_bgcolor='black',
+            font=dict(color='white'),
+            xaxis=dict(gridcolor='gray'),
+            yaxis=dict(gridcolor='gray'),
+            margin=dict(l=70, r=30, t=50, b=50),
         )
         path = f'{asset_id}.png'
-        fig.write_image(path)
+        fig.write_image(path, width=800, height=600, scale=3)
         return path
         
 
@@ -73,12 +79,15 @@ class ApiInterface:
         # Make two requests and wait for the two of them to finish
         # before returning the result
         async with aiohttp.ClientSession(headers=self.headers) as session:
-            tasks = (
-                asyncio.ensure_future(self._get(session, historical_url)),
-                asyncio.ensure_future(self._get(session, info_url))
-            )
+            try:
+                tasks = (
+                    asyncio.ensure_future(self._get(session, historical_url)),
+                    asyncio.ensure_future(self._get(session, info_url))
+                )
 
-            historical_data, resume_data = await asyncio.gather(*tasks)
+                historical_data, resume_data = await asyncio.gather(*tasks)
+            except Exception:
+                raise FetchError()
             
         return (historical_data, resume_data)
 

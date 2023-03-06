@@ -69,7 +69,7 @@ async def run(ctx, symbol: str, interval: str=None):
         !run BTC 2020-01-01.2021-01-01
     This command will fetch data on BTC from the 1st of January 2020 to the 1st of January 2021.
     """
-    embed = discord.Embed(title=f"Info on {symbol}")
+    embed = discord.Embed(title=f"Information on {symbol}")
 
     if api_inter.validate_symbol(symbol):
         first_date = None
@@ -78,6 +78,9 @@ async def run(ctx, symbol: str, interval: str=None):
             first, second = interval.split('.')
             first_date = datetime.strptime(first, "%Y-%m-%d")
             second_date = datetime.strptime(second, "%Y-%m-%d")
+
+            if first_date > second_date:
+                first_date, second_date = second_date, first_date
         try:
             basic_info, img_path = await api_inter.fetch_data(symbol, first_date, second_date)
 
@@ -90,27 +93,34 @@ async def run(ctx, symbol: str, interval: str=None):
             else:
                 price = f"${price:,.6f}"
 
+            embed.add_field(name="Crypto rank", value=basic_info['rank'])
+            embed.add_field(name="Price", value=price)
+            embed.add_field(name="Market Cap", value=market_cap_usd, inline=False)
+            embed.add_field(name="Volume in 24h", value=volume_usd)
+            embed.add_field(name="Change in 24h", value=change)
             embed.set_image(url=f"attachment://{img_path}")
-            embed.add_field(name="Crypto rank", value=basic_info['rank'], inline=False)
-            embed.add_field(name="Market Cap", value=market_cap_usd, inline=True)
-            embed.add_field(name="Volume", value=volume_usd, inline=False)
-            embed.add_field(name="Price", value=price, inline=False)
-            embed.add_field(name="Change", value=change, inline=True)
 
             await ctx.send(embed=embed, file=discord.File(img_path))
             os.remove(img_path)
         except InvalidCrypto as e:
+            await ctx.send(f"{e}")
+        except FetchError as e:
             await ctx.send(f"{e}")
     else:
         await ctx.send("Invalid symbol, see the usage of the command with !help run")
 
 
 
-# @bot.event
-# async def on_command_error(ctx, exception):
-#     if isinstance(exception, commands.PrivateMessageOnly):
-#         pass
+@bot.event
+async def on_command_error(ctx, exception):
+    if isinstance(exception, commands.MissingRequiredArgument):
+        command_name = ctx.message.content.split(" ")[0].replace("!", "")
+        await ctx.send(f"Command missing argument, please use **!help {command_name}** to see how to use it.")
 
-#     print(exception)
+    print(
+        f"""Error:
+            {exception}
+        """
+    )
 
 bot.run(TOKEN)
