@@ -85,26 +85,27 @@ async def run(ctx, symbol: str, interval: str=None):
             if first_date > second_date:
                 first_date, second_date = second_date, first_date
         try:
-            basic_info, img_path = await api_inter.fetch_data(symbol, first_date, second_date)
+            async with ctx.typing():
+                basic_info, img_path = await api_inter.fetch_data(symbol, first_date, second_date)
 
-            market_cap_usd = f"${float(basic_info['marketCapUsd']):,.2f}"
-            volume_usd = f"${float(basic_info['volumeUsd24Hr']):,.2f}"
-            change = f"{float(basic_info['changePercent24Hr']):.2f} %"
-            price = float(basic_info['priceUsd'])
-            if price > 1:
-                price = f"${price:,.3f}"
-            else:
-                price = f"${price:,.6f}"
+                market_cap_usd = f"${float(basic_info['marketCapUsd']):,.2f}"
+                volume_usd = f"${float(basic_info['volumeUsd24Hr']):,.2f}"
+                change = f"{float(basic_info['changePercent24Hr']):.2f} %"
+                price = float(basic_info['priceUsd'])
+                if price > 1:
+                    price = f"${price:,.3f}"
+                else:
+                    price = f"${price:,.6f}"
 
-            embed.add_field(name="Crypto rank", value=basic_info['rank'])
-            embed.add_field(name="Price", value=price)
-            embed.add_field(name="Market Cap", value=market_cap_usd, inline=False)
-            embed.add_field(name="Volume in 24h", value=volume_usd)
-            embed.add_field(name="Change in 24h", value=change)
-            embed.set_image(url=f"attachment://{img_path}")
+                embed.add_field(name="Crypto rank", value=basic_info['rank'])
+                embed.add_field(name="Price", value=price)
+                embed.add_field(name="Market Cap", value=market_cap_usd, inline=False)
+                embed.add_field(name="Volume in 24h", value=volume_usd)
+                embed.add_field(name="Change in 24h", value=change)
+                embed.set_image(url=f"attachment://{img_path}")
 
-            await ctx.send(embed=embed, file=discord.File(img_path))
-            os.remove(img_path)
+                await ctx.send(embed=embed, file=discord.File(img_path))
+                os.remove(img_path)
         except InvalidCrypto as e:
             await ctx.send(f"{e}")
         except FetchError as e:

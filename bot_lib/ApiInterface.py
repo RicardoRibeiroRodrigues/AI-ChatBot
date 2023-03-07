@@ -9,7 +9,7 @@ from .BotExceptions import InvalidCrypto, FetchError
 class ApiInterface:
     BASE_URL = 'https://api.coincap.io/v2/assets'
     
-    async def __init__(self, api_key) -> None:
+    def __init__(self, api_key) -> None:
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "Accept": "application/json",
