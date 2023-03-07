@@ -30,6 +30,7 @@ async def on_ready():
 async def source(ctx):
     """
     Command that sends the link for the bot's source code on github.
+    This command is DM only.
     """
     embed = discord.Embed(title="Link do repositório no github")
     embed.url = "https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot"
@@ -43,6 +44,7 @@ async def source(ctx):
 async def author(ctx):
     """
     Sends a embed with bot author's name, github profile and email.
+    This command is DM only.
     """
     embed = discord.Embed()
     embed.title = 'Autor'
@@ -57,8 +59,9 @@ async def author(ctx):
 @bot.command(help="Command to list info on a specific cryptocurrency.")
 async def run(ctx, symbol: str, interval: str=None):
     """
-    This command uses the coincap API to fetch data on a specific cryptocurrency.
+    This command uses the **coincap API** to fetch data on a specific cryptocurrency.
     The data is then to the user on a discord embed with a historical price graph and basic info on the crypto.
+    This command is DM only.
 
     Parameters:
         :symbol: The symbol of the cryptocurrency to fetch data on, must be on the crypto typical format (e.g. BTC, ETH, XRP, etc.)
