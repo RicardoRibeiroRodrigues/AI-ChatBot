@@ -19,7 +19,7 @@ class ApiInterface:
         
     
     def validate_symbol(self, symbol: str) -> bool:
-        exp = r'^[A-Z]{2,5}'
+        exp = r'^[A-Za-z]{2,5}'
         return re.fullmatch(exp, symbol) is not None
     
     def validate_interval(self, interval: str) -> bool:
@@ -58,7 +58,7 @@ class ApiInterface:
     async def fetch_data(self, ticker: str, start_date: datetime=None, end_date: datetime=None) -> tuple:
         asset_id = self.assets.get(ticker.upper())
         if asset_id is None:
-            raise InvalidCrypto(ticker)
+            raise InvalidCrypto(ticker, self.assets.keys())
 
         date_arg = ""
         if start_date and end_date:

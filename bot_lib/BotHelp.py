@@ -9,18 +9,12 @@ class CommandsHelp(commands.HelpCommand):
         embed = discord.Embed(title='Help', description='List of available commands:')
         
         # Iterate over each cog and command in the bot's command tree
-        for cog, commands in mapping.items():
-            if cog is None:
-                # If the command does not belong to a cog, add it to the default category
-                category = 'General commands'
-            else:
-                # Otherwise, use the cog's name as the category
-                category = cog.qualified_name
+        for commands in mapping.values():
                 
             # Add a field to the embed for each command in the category
-            command_names = [command.name for command in commands if command.name != 'help']
-            command_description = '\n'.join(command_names)
-            embed.add_field(name=category, value=command_description, inline=False)
+            for command in commands:
+                if command.name != 'help':
+                    embed.add_field(name=command.name, value=command.usage, inline=False)
 
         embed.add_field(
             name='Help on a specific command', 

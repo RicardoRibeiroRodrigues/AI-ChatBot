@@ -26,7 +26,7 @@ async def on_ready():
 
 
 @commands.dm_only()
-@bot.command(help="Sends a link to the github repo")
+@bot.command(help="Sends a link to the github repo", usage="!source")
 async def source(ctx):
     """
     Command that sends the link for the bot's source code on github.
@@ -40,7 +40,7 @@ async def source(ctx):
 
 
 @commands.dm_only()
-@bot.command(help="Sends the bot author's info")
+@bot.command(help="Sends the bot author's info", usage="!author")
 async def author(ctx):
     """
     Sends a embed with bot author's name, github profile and email.
@@ -56,7 +56,7 @@ async def author(ctx):
     await ctx.send(embed=embed)
 
 @commands.dm_only()
-@bot.command(help="Command to list info on a specific cryptocurrency.")
+@bot.command(help="Command to list info on a specific cryptocurrency.", usage="!run BTC 2020-01-01.2021-01-01")
 async def run(ctx, symbol: str, interval: str=None):
     """
     This command uses the **coincap API** to fetch data on a specific cryptocurrency.
@@ -107,7 +107,10 @@ async def run(ctx, symbol: str, interval: str=None):
                 await ctx.send(embed=embed, file=discord.File(img_path))
                 os.remove(img_path)
         except InvalidCrypto as e:
-            await ctx.send(f"{e}")
+            embed = discord.Embed(title=e)
+            valid_crypto_str = ", ".join(e.get_valid_cryptos())
+            embed.add_field(name="Valid cryptos:", value=valid_crypto_str)
+            await ctx.send(embed=embed)
         except FetchError as e:
             await ctx.send(f"{e}")
     else:
