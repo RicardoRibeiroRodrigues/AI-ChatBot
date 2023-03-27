@@ -1,7 +1,12 @@
 
 class InvalidCrypto(Exception):
-    def __init__(self, ticker: str):
-        super().__init__(f'It seems that {ticker} is not in the database, please try again with a other crypto.')
+    def __init__(self, ticker: str, crypto_list: list[str]):
+        error_msg = f'The crypto {ticker} is invalid!'
+        self.valid_cryptos = crypto_list
+        super().__init__(error_msg)
+    
+    def get_valid_cryptos(self) -> list[str]:
+        return self.valid_cryptos
 
 class FetchError(Exception):
     def __init__(self):
