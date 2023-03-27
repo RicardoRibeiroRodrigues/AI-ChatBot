@@ -83,10 +83,13 @@ class Scrapper:
     async def scrape(self, url: str) -> tuple[str, str]:
         url_queue = [url]
         download_count = 0
+        # Using only in this function for its O(1) in func.
+        urls_set = set(self.urls)
 
         async with aiohttp.ClientSession() as session:
             while url_queue and download_count < self.MAX_DOWNLOADS: 
                 curr_link = url_queue.pop(0)
+                print(f"[INFO] Downloading {curr_link}")
                 soup = await self.get_content(curr_link, session)
 
                 if not soup:
@@ -97,7 +100,9 @@ class Scrapper:
 
                 for a_tag in soup.find_all('a'):
                     url = a_tag.get('href')
-                    if self.is_valid_url(url) and not self.url_in_db(url):
+                    if self.is_valid_url(url) and (url not in urls_set):
+                        # Set prevents downloading duplicates.
+                        urls_set.add(url)
                         url_queue.append(url)
 
                 yield self.extract_from_soup(curr_link, soup)

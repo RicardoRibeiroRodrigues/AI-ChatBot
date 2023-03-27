@@ -162,7 +162,7 @@ async def search(ctx, *query):
         :query: The query to be searched.
     
     **Example usage:**
-        !search python computer
+        !search cloud computing 
     """
     docs = nlp_tools.search(" ".join(query))
     if not docs:
