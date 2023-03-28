@@ -82,7 +82,10 @@ class Scrapper:
         if (not url) or re.match(forbidden_file_formats, url) or (not re.match(r"(https://)|(http://)", url)):
             return False
         # Prevent equal urls with only the # in the end of difference (sections of the same page).
-        return "#".join(url.rsplit('#', 1)[:-1])
+        divided_by_hashtag = url.rsplit('#', 1)
+        if len(divided_by_hashtag) > 1:
+            return "#".join(divided_by_hashtag[:-1])
+        return url
         
 
     def url_in_db(self, url: str) -> bool:
