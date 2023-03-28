@@ -143,6 +143,10 @@ async def crawl(ctx, url: str):
     async for title, content in scrapper.scrape(url):
         await ctx.send(f"Content of <{title}> fetched!")
         contents.append(content)
+    if len(contents) == 0:
+        await ctx.send("Could not download the page, try again with other link!")
+        return
+    
     nlp_tools.fit_transform(scrapper.contents)
     for content in contents:
         nlp_tools.add_document(content)
