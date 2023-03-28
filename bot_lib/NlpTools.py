@@ -43,14 +43,14 @@ class NlpTools:
         self.save_index()
         return doc_id
 
-    def tokenize(self, text: str) -> list[str]:
+    def tokenize(self, text: str) -> list:
         return re.findall(self.TOKEN_REGEX, text.lower())
 
     def save_index(self) -> None:
         with open(self.INDEX_PATH, "w") as f:
             json.dump(self.index, f)
 
-    def search(self, query: str) -> list[int]:
+    def search(self, query: str) -> dict:
         """
         Using OR aproach (sum of tfidfs)
         """
@@ -66,7 +66,7 @@ class NlpTools:
                         ret[doc] = self.index[token][doc]
         return ret 
 
-    def wn_search(self, search_word: str) -> tuple[str, dict]:
+    def wn_search(self, search_word: str) -> tuple:
         search_word_syn = wordnet.synsets(search_word)
         if not search_word_syn:
             return None, None
@@ -88,7 +88,7 @@ class NlpTools:
         
         return best_match, self.index[best_match]
     
-    def fit_transform(self, docs: list[str]) -> None:
+    def fit_transform(self, docs: list) -> None:
         self.tfidf = self.vectorizer.fit_transform(docs)
 
 

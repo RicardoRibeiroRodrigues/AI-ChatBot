@@ -18,19 +18,19 @@ class Scrapper:
             os.mkdir(self.DOCS_PATH)
         
         if not os.path.exists(self.URLS_PATH):
-            self.urls: list[str] = []
+            self.urls: list = []
         else:
             print("[INFO] Loading urls...")
             self.load_urls()
         
         if not os.path.exists(self.CONTENTS_PATH):
-            self.contents: list[str] = []
+            self.contents: list = []
         else:
             print("[INFO] Loading contents...")
             self.load_contents()
         
         if not os.path.exists(self.TITLES_PATH):
-            self.titles: list[str] = []
+            self.titles: list = []
         else:
             print("[INFO] Loading titles...")
             self.load_titles()
@@ -89,7 +89,7 @@ class Scrapper:
         return url in self.urls
 
 
-    def extract_from_soup(self, url: str, soup: BeautifulSoup) -> tuple[str, str]:
+    def extract_from_soup(self, url: str, soup: BeautifulSoup) -> tuple:
         text = soup.get_text()
         title = soup.title.string
         self.save_doc(self.url_to_filename(url), text.lower())
@@ -98,7 +98,7 @@ class Scrapper:
         return title, text
     
 
-    async def scrape(self, url: str) -> tuple[str, str]:
+    async def scrape(self, url: str) -> tuple:
         url_queue = [url]
         download_count = 0
         # Using only in this function for its O(1) in func.
@@ -142,7 +142,7 @@ class Scrapper:
         self.save_titles()
 
 
-    async def get_content(self, url: str, session) -> BeautifulSoup | None:
+    async def get_content(self, url: str, session) -> BeautifulSoup:
         async with session.get(url) as response:
             content = await response.text()
             if response.status != 200 or not content:
