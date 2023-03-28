@@ -85,6 +85,8 @@ class Scrapper:
         divided_by_hashtag = url.rsplit('#', 1)
         if len(divided_by_hashtag) > 1:
             return "#".join(divided_by_hashtag[:-1])
+        if url.endswith('/'):
+            return url[:-1]
         return url
         
 
