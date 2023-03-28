@@ -169,13 +169,13 @@ async def search(ctx, *query):
         await ctx.send(f"The query {query} was not found in the database, please try another query or try using wn_search.")
         return
 
-    embed = discord.Embed(title=f"Results for {' '.join(query)}")
+    embed = discord.Embed(title=f"Best matches for {' '.join(query)}")
     docs = sorted(docs, key=lambda x: docs[x], reverse=True)
 
     for i, doc in enumerate(docs):
         if i >= N_RESULTS_SEARCH:
             break
-        embed.add_field(name=f"Document {doc}", value=scrapper.urls[int(doc)])
+        embed.add_field(name=f"{scrapper.titles[int(doc)]}", value=scrapper.urls[int(doc)])
     await ctx.send(embed=embed)
     
 
@@ -204,7 +204,7 @@ async def wn_search(ctx, word: str):
     for i, doc in enumerate(docs):
         if i >= N_RESULTS_SEARCH:
             break
-        embed.add_field(name=f"Document {doc}", value=scrapper.urls[int(doc)])
+        embed.add_field(name=f"Document {scrapper.titles[int(doc)]}", value=scrapper.urls[int(doc)])
     await ctx.send(embed=embed)
 
 

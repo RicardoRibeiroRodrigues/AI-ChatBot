@@ -22,4 +22,6 @@ elif args.mode == 'cleanup':
         os.remove('data/urls.pickle')
     if os.path.exists('data/contents.pickle'):
         os.remove('data/contents.pickle')
+    if os.path.exists('data/titles.pickle'):
+        os.remove('data/titles.pickle')
 
