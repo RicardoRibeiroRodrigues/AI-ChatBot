@@ -83,6 +83,8 @@ class NlpTools:
             if word_syn.wup_similarity(search_word_syn) > biggest_similarity:
                 biggest_similarity = word_syn.wup_similarity(search_word_syn)
                 best_match = word
+        if not best_match:
+            return None, None
         
         return best_match, self.index[best_match]
     
