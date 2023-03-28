@@ -5,6 +5,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from bot_lib.BotHelp import CommandsHelp
 from bot_lib.ApiInterface import ApiInterface
+from bot_lib.scrapper import Scrapper
+from bot_lib.NlpTools import NlpTools
 from bot_lib.BotExceptions import *
 
 load_dotenv()
@@ -13,9 +15,12 @@ TOKEN = os.getenv("TOKEN")
 if not API_KEY or not TOKEN:
     raise Exception('Environment variable not set')
 
+N_RESULTS_SEARCH = 12
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=CommandsHelp())
 api_inter = ApiInterface(API_KEY)
+scrapper = Scrapper(max_downloads=25)
+nlp_tools = NlpTools()
 
 
 @bot.event
@@ -116,6 +121,91 @@ async def run(ctx, symbol: str, interval: str=None):
     else:
         await ctx.send("Invalid symbol, see the usage of the command with !help run")
 
+@commands.dm_only()
+@bot.command(help="Command to crawl internet and save the content of a site in the database", usage="!crawl <url>")
+async def crawl(ctx, url: str):
+    """
+    This command receives a url and fetches the content of the page.
+    The content is then processed and saved in the database.
+    This command is DM only.
+
+    Parameters:
+        :url: The url of the page to be crawled.
+    
+    **Example usage:**
+        !crawl https://github.com/tiagoft/NLP/blob/main/APS.md
+    """
+    if scrapper.url_in_db(url):
+        await ctx.send("This url has already been added to the database")
+        return
+
+    contents = [] 
+    async for title, content in scrapper.scrape(url):
+        await ctx.send(f"Content of <{title}> fetched!")
+        contents.append(content)
+    nlp_tools.fit_transform(scrapper.contents)
+    for content in contents:
+        nlp_tools.add_document(content)
+    await ctx.send(f"Finished crawling, crawled {len(contents)} pages!")
+    
+
+
+@commands.dm_only()
+@bot.command(help="Command to search for a specific word in the database", usage="!search <query>")
+async def search(ctx, *query):
+    """
+    This command receives a query and searches for it in the database.
+    Returns the documents where the query was found.
+    This command is DM only.
+
+    Parameters:
+        :query: The query to be searched.
+    
+    **Example usage:**
+        !search cloud computing 
+    """
+    docs = nlp_tools.search(" ".join(query))
+    if not docs:
+        await ctx.send(f"The query {query} was not found in the database, please try another query or try using wn_search.")
+        return
+
+    embed = discord.Embed(title=f"Results for {' '.join(query)}")
+    docs = sorted(docs, key=lambda x: docs[x], reverse=True)
+
+    for i, doc in enumerate(docs):
+        if i >= N_RESULTS_SEARCH:
+            break
+        embed.add_field(name=f"Document {doc}", value=scrapper.urls[int(doc)])
+    await ctx.send(embed=embed)
+    
+
+@commands.dm_only()
+@bot.command(help="Command to search for a term using wordnet", usage="!wnsearch <word>")
+async def wn_search(ctx, word: str):
+    """
+    This receives a word and searches for it in the database, using the wup_similarity for searching for similar terms.
+    Returns the most similar term and the document where it was found.
+    This command is DM only.
+
+    Parameters:
+        :word: The word to be searched.
+    
+    **Example usage:**
+        !wnsearch pc
+    """
+    match, docs = nlp_tools.wn_search(word)
+    if not match or not docs:
+        await ctx.send(f"The word {word} was not found in the wordnet, please try another word.")
+        return
+    
+    embed = discord.Embed(title=f"Found matches for {match}")
+    docs = sorted(docs, key=lambda x: docs[x], reverse=True)
+
+    for i, doc in enumerate(docs):
+        if i >= N_RESULTS_SEARCH:
+            break
+        embed.add_field(name=f"Document {doc}", value=scrapper.urls[int(doc)])
+    await ctx.send(embed=embed)
 
 
 @bot.event

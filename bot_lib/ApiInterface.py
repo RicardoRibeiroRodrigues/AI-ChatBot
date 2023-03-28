@@ -14,7 +14,7 @@ class ApiInterface:
             "Authorization": f"Bearer {api_key}",
             "Accept": "application/json",
         }
-        with open('assets.json', 'r') as f:
+        with open('data/assets.json', 'r') as f:
             self.assets = json.load(f)
         
     
