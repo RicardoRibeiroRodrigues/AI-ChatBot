@@ -3,7 +3,7 @@ import os
 import json
 from nltk.corpus import wordnet
 from sklearn.feature_extraction.text import TfidfVectorizer
-import numpy as np
+import tensorflow as tf
 
 
 class NlpTools:
@@ -20,6 +20,10 @@ class NlpTools:
         else:
             self.index = {"[__CURR_ID__]": 0}
 
+        print("[INFO] Loading classifier...")
+        self.classifier = tf.keras.models.load_model("models/CLASS_MODEL")
+        print("[INFO] Done initializing NlpTools.")
+
     def get_inc_curr_id(self) -> int:
         curr_id = self.index["[__CURR_ID__]"]
         self.index["[__CURR_ID__]"] += 1
@@ -29,7 +33,7 @@ class NlpTools:
         with open(self.INDEX_PATH, "r") as f:
             self.index = json.load(f)
 
-    def add_document(self, text: str) -> None:
+    def add_document(self, text: str, negative_amount: float) -> None:
         tokens = self.tokenize(text)
         doc_id = self.get_inc_curr_id()
 
@@ -38,7 +42,7 @@ class NlpTools:
             if token not in self.index:
                 self.index[token] = {}
             if doc_id not in self.index[token]:
-                self.index[token][doc_id] = self.tfidf[doc_id, term_f]
+                self.index[token][doc_id] = [self.tfidf[doc_id, term_f], negative_amount]
         
         self.save_index()
         return doc_id
@@ -90,5 +94,16 @@ class NlpTools:
     
     def fit_transform(self, docs: list) -> None:
         self.tfidf = self.vectorizer.fit_transform(docs)
+    
+    def _convert_scale(self, value: float) -> float:
+        return 1 - (value * 2) 
+
+    def get_negative_amount_texts(self, texts: list) -> list:
+        classification = self.classifier.predict(texts)
+        # The classifier returns a confidence that goes from 0 to 1, but we need it -1 to 1
+        # Using the value[1] because the value[0] is the positive confidence, and we need the negative one
+        classification = [self._convert_scale(value[1]) for value in classification]
+        return classification
+
 
 
