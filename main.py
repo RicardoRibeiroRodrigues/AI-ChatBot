@@ -148,11 +148,11 @@ async def crawl(ctx, url: str):
         return
     
     nlp_tools.fit_transform(scrapper.contents)
-    for content in contents:
-        nlp_tools.add_document(content)
+    negative_amount = nlp_tools.get_negative_amount_texts(contents)
+    for content, negative in zip(contents, negative_amount):
+        nlp_tools.add_document(content, negative)
     await ctx.send(f"Finished crawling, crawled {len(contents)} pages!")
     
-
 
 @commands.dm_only()
 @bot.command(help="Command to search for a specific word in the database", usage="!search <query>")
@@ -168,13 +168,28 @@ async def search(ctx, *query):
     **Example usage:**
         !search cloud computing 
     """
+    # Find th= in the query
+    th = -1.0
+    for i, word in enumerate(query):
+        if "th=" in word:
+            th = float(word.split("th=")[1])
+            query = list(query)
+            query.pop(i)
+            break
+
     docs = nlp_tools.search(" ".join(query))
     if not docs:
         await ctx.send(f"The query {query} was not found in the database, please try another query or try using wn_search.")
         return
-
-    embed = discord.Embed(title=f"Best matches for {' '.join(query)}")
-    docs = sorted(docs, key=lambda x: docs[x], reverse=True)
+    th_text = f"with threshold {th}" if th != -1.0 else ""
+    embed = discord.Embed(title=f"Best matches for {' '.join(query)} {th_text}")
+    # docs[x][0] -> TF-IDF score, docs[x][1] -> negative amount
+    # Filter by negative amount
+    docs = {doc: docs[doc] for doc in docs if docs[doc][1] >= th}
+    if not docs:
+        await ctx.send(f"All results had a negative amount higher than the threshold, please try another query.")
+        return
+    docs = sorted(docs, key=lambda x: docs[x][0], reverse=True)
 
     for i, doc in enumerate(docs):
         if i >= N_RESULTS_SEARCH:
@@ -185,7 +200,7 @@ async def search(ctx, *query):
 
 @commands.dm_only()
 @bot.command(help="Command to search for a term using wordnet", usage="!wnsearch <word>")
-async def wn_search(ctx, word: str):
+async def wn_search(ctx, word: str, th=None):
     """
     This receives a word and searches for it in the database, using the wup_similarity for searching for similar terms.
     Returns the most similar term and the document where it was found.
@@ -197,13 +212,28 @@ async def wn_search(ctx, word: str):
     **Example usage:**
         !wnsearch pc
     """
+    if th:
+        th = float(th.replace("th=", ""))
+    else:
+        # Default threshold
+        th = -1.0
     match, docs = nlp_tools.wn_search(word)
-    if not match or not docs:
+    if not match:
         await ctx.send(f"The word {word} was not found in the wordnet, please try another word.")
         return
+    elif not docs:
+        await ctx.send(f"Could not find any documents with the word {match} or with th >= {th}")
+        return
     
-    embed = discord.Embed(title=f"Found matches for {match}")
-    docs = sorted(docs, key=lambda x: docs[x], reverse=True)
+    th_text = f"with threshold {th}" if th != -1.0 else ""
+    embed = discord.Embed(title=f"Found matches for {match} {th_text}")
+
+    docs = {doc: docs[doc] for doc in docs if docs[doc][1] >= th}
+    if not docs:
+        await ctx.send(f"All results had a negative amount higher than the threshold, please try another query.")
+        return
+
+    docs = sorted(docs, key=lambda x: docs[x][0], reverse=True)
 
     for i, doc in enumerate(docs):
         if i >= N_RESULTS_SEARCH:
