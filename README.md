@@ -6,6 +6,7 @@ Bot para discord desenvolvido como APS da disciplina de natural language process
 - [Ensaio 1](https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot/blob/main/ensaios/ensaio_1.md) - Adicionando comando !run para mandar informações sobre cryptomoedas para o usuário.
 - [Ensaio 2](https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot/blob/main/ensaios/ensaio_2.md) - Adicionando webcrawling e funcões de busca.
 - [Ensaio 3](https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot/blob/main/ensaios/ensaio_3.md) - Filtro por negatividade das páginas baixadas.
+- [Ensaio 4](https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot/blob/main/ensaios/ensaio_4.md) - Geração de conteúdo a partir do banco de dados.
 
 ## Como rodar local
 1. Clone o repositório com o seguinte comando:
