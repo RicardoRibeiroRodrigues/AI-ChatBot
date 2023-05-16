@@ -75,7 +75,7 @@ class ContentGenerator:
         return Model(input_layer, x), Model(input_layer, latent_rep)
     
     def generate_content(self, pages, n_predictions=20):
-        phrase = pages
+        phrase = ""
         # Sliding context
         context = pages
         vocabulary = self.vectorize_layer.get_vocabulary()
