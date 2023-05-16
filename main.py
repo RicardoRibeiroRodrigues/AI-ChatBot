@@ -19,7 +19,7 @@ N_RESULTS_SEARCH = 12
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=CommandsHelp())
 api_inter = ApiInterface(API_KEY)
-scrapper = Scrapper(max_downloads=10)
+scrapper = Scrapper(max_downloads=25)
 nlp_tools = NlpTools(scrapper)
 
 
@@ -293,19 +293,19 @@ async def generate(ctx, *query):
     await ctx.send(generated_text)
 
 
-# @bot.event
-# async def on_command_error(ctx, exception):
-#     if isinstance(exception, commands.MissingRequiredArgument):
-#         command_name = ctx.message.content.split(" ")[0].replace("!", "")
-#         await ctx.send(
-#             f"Command missing argument, please use **!help {command_name}** to see how to use it."
-#         )
+@bot.event
+async def on_command_error(ctx, exception):
+    if isinstance(exception, commands.MissingRequiredArgument):
+        command_name = ctx.message.content.split(" ")[0].replace("!", "")
+        await ctx.send(
+            f"Command missing argument, please use **!help {command_name}** to see how to use it."
+        )
 
-#     print(
-#         f"""Error:
-#             {exception}
-#         """
-#     )
+    print(
+        f"""Error:
+            {exception}
+        """
+    )
 
 
 bot.run(TOKEN)

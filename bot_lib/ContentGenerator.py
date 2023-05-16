@@ -75,33 +75,36 @@ class ContentGenerator:
         return Model(input_layer, x), Model(input_layer, latent_rep)
     
     def generate_content(self, pages, n_predictions=20):
-        phrase = ""
+        phrase = pages
         # Sliding context
         context = pages
-        for _ in range(n_predictions):
+        vocabulary = self.vectorize_layer.get_vocabulary()
+        count = 0
+        while count < n_predictions:
             pred = self.predict(context)
 
             # Don't repeat words
-            while True:
+            try:
+                while True:
+                    # Select k-best
+                    k_best_predictions = tf.math.top_k(pred, k=10).indices[0,:]
+                    idx = np.random.choice(k_best_predictions.numpy())
+                    print(idx)
 
-                # Select k-best
-                k_best_predictions = tf.math.top_k(pred, k=10).indices[0,:]
-                idx = np.random.choice(k_best_predictions.numpy())
-                print(idx)
-
-                if idx >= len(self.vectorize_layer.get_vocabulary()):
-                    print("idx out of range: ", len(self.vectorize_layer.get_vocabulary()))
-                    idx = tf.argmax(pred, axis=1)[0]
-                
-                word = self.vectorize_layer.get_vocabulary()[idx]
-                if word in phrase.split():
-                    pred[0][idx] = 0
-                else:
-                    break
+                    word = vocabulary[idx]
+                    if word in phrase.split():
+                        pred[0][idx] = 0
+                    else:
+                        break
+            except IndexError as e:
+                print(f"IDX: {idx} has caused error, ")
+                print(e)
+                continue
                     
             phrase = f"{phrase} {word}"
             context = f"{context} {word}"
             context = ' '.join(context.split()[1:])
+            count += 1
             print(word)
         return phrase
 
