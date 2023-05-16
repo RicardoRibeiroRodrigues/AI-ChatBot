@@ -75,7 +75,7 @@ class ContentGenerator:
         return Model(input_layer, x), Model(input_layer, latent_rep)
     
     def generate_content(self, pages, n_predictions=20):
-        phrase = ""
+        phrase = []
         # Sliding context
         context = pages
         vocabulary = self.vectorize_layer.get_vocabulary()
@@ -92,7 +92,7 @@ class ContentGenerator:
                     print(idx)
 
                     word = vocabulary[idx]
-                    if word in phrase.split():
+                    if word in phrase:
                         pred[0][idx] = 0
                     else:
                         break
@@ -101,10 +101,10 @@ class ContentGenerator:
                 print(e)
                 continue
                     
-            phrase = f"{phrase} {word}"
+            phrase.append(word)
             context = f"{context} {word}"
             context = ' '.join(context.split()[1:])
             count += 1
             print(word)
-        return phrase
+        return " ".join(phrase)
 
