@@ -302,6 +302,16 @@ async def generate(ctx, *query):
     usage="!gptgenerate <query>",
 )
 async def gptgenerate(ctx, *query):
+    """
+    This command receives a query and generates a text based on the current scrapped content, using GPT-2 pre-trained.
+    This command is DM only.
+
+    Parameters:
+        :query: The query to be searched.
+
+    **Example usage:**
+        !gptgenerate python
+    """
     async with ctx.typing():
         await ctx.send("Generating text, please wait...")
         generated_text = nlp_tools.generate_text(" ".join(query), 'gpt')
