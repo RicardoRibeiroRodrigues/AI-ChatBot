@@ -9,11 +9,13 @@ from keras.layers import (
     GlobalAveragePooling1D,
     LSTM,
 )
+from transformers import pipeline, set_seed
 import os
 from keras.models import Model, load_model
 import keras
 import numpy as np
 import tensorflow as tf
+from random import randint
 
 
 class ContentGenerator:
@@ -30,6 +32,9 @@ class ContentGenerator:
             self.predictor = load_model("models/CONTENT_GENERATOR")
         else:
             self.build_model()
+        
+        set_seed(42)
+        self.gpt_generator = pipeline('text-generation', model='gpt2')
 
     def build_model(self):
         self.predictor, latent = self._predict_word_model(10, 15, self.vocab_size)
@@ -107,4 +112,14 @@ class ContentGenerator:
             count += 1
             print(word)
         return " ".join(phrase)
+
+    def gpt_generate(self, page):
+        prompt = f"Generate a content for this page: \n" + page[:900]
+        res = self.gpt_generator(prompt, max_new_tokens=150, num_return_sequences=5)
+        # Select one of the 5 top generated texts
+        n_res = len(res)
+        idx = randint(0, n_res - 1)
+        # Returns only the generated text, without the prompt
+        return res[idx]['generated_text'][900:]
+        
 

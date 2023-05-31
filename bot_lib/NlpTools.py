@@ -126,12 +126,23 @@ class NlpTools:
         classification = [self._convert_scale(value[1]) for value in classification]
         return classification
     
-    def generate_text(self, query: str) -> str:
+    def generate_text(self, query: str, model: str) -> str:
         docs = self.search(query)
         if not docs:
-            return None
+            docs = self.wn_search(query)
+            docs = docs[1]
+            print(docs)
+            if docs is None:
+                return None
+    
         docs = max(docs, key=lambda x: docs[x][0])
-
-        a = self.content_generator.generate_content(self.scrapper_ref.contents[int(docs)])
-        print(a)
-        return a
+        if model == 'inhouse':
+            content = self.scrapper_ref.contents[int(docs)]
+            processed_string = re.sub(r'\s+', ' ', content)
+            res = self.content_generator.generate_content(processed_string)
+        elif model == 'gpt':
+            content = self.scrapper_ref.contents[int(docs)]
+            processed_string = re.sub(r'\s+', ' ', content)
+            res = self.content_generator.gpt_generate(processed_string)
+        return res
+    

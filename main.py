@@ -289,9 +289,26 @@ async def generate(ctx, *query):
     **Example usage:**
         !generate cloud computing
     """
-    generated_text = nlp_tools.generate_text(" ".join(query))
+    generated_text = nlp_tools.generate_text(" ".join(query), 'inhouse')
+    if generated_text is None:
+        await ctx.send("Could not find any documents with the query, please try another query.")
+        return
     await ctx.send(generated_text)
 
+
+@commands.dm_only()
+@bot.command(
+    help="Command to generate content based on the current scrapped content using GPT-2",
+    usage="!gptgenerate <query>",
+)
+async def gptgenerate(ctx, *query):
+    async with ctx.typing():
+        await ctx.send("Generating text, please wait...")
+        generated_text = nlp_tools.generate_text(" ".join(query), 'gpt')
+        if generated_text is None:
+            await ctx.send("Could not find any documents with the query, please try another query.")
+            return
+    await ctx.send(generated_text)
 
 @bot.event
 async def on_command_error(ctx, exception):
