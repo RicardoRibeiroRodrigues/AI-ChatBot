@@ -8,6 +8,7 @@ from bot_lib.ApiInterface import ApiInterface
 from bot_lib.scrapper import Scrapper
 from bot_lib.NlpTools import NlpTools
 from bot_lib.BotExceptions import *
+import asyncio
 
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
@@ -313,8 +314,10 @@ async def gptgenerate(ctx, *query):
         !gptgenerate python
     """
     async with ctx.typing():
-        await ctx.send("Generating text, please wait...")
-        generated_text = nlp_tools.generate_text(" ".join(query), 'gpt')
+        await ctx.send("Generating text, it may take a while, please wait....")
+        loop = asyncio.get_event_loop()
+        generated_text = await loop.run_in_executor(None, nlp_tools.generate_text, " ".join(query), 'gpt')
+        # generated_text = nlp_tools.generate_text(" ".join(query), 'gpt')
         if generated_text is None:
             await ctx.send("Could not find any documents with the query, please try another query.")
             return

@@ -114,12 +114,9 @@ class ContentGenerator:
         return " ".join(phrase)
 
     def gpt_generate(self, page):
-        prompt = f"Generate a content for this page: \n" + page[:900]
-        res = self.gpt_generator(prompt, max_new_tokens=150, num_return_sequences=5)
-        # Select one of the 5 top generated texts
-        n_res = len(res)
-        idx = randint(0, n_res - 1)
+        prompt = f"Generate a content for this page: \n" + page[:500]
+        res = self.gpt_generator(prompt, max_new_tokens=50)
         # Returns only the generated text, without the prompt
-        return res[idx]['generated_text'][900:]
+        return "\n".join(res[0]['generated_text'].split('\n')[1:])
         
 
