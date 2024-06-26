@@ -1,0 +1,7 @@
+## DevLog 3 - Filter by negativity on the content of downloaded pages
+
+The goal of this delivery was to add a functionality to the `!search` and `!wn_search` commands, incorporating a negativity threshold for the content. This allows filtering the database documents by negativity, returning only those classified (by a machine learning/deep learning model) as more positive than the threshold passed as an argument. This is useful when the user does not want to see certain content or if you want your software to block certain content automatically.
+
+To address this problem, the first step in my solution was to find a dataset to train my positive/negative classifier. I found the dataset from an old Kaggle competition, [Jigsaw Toxic Comment Classification Challenge](https://www.kaggle.com/datasets/julian3833/jigsaw-toxic-comment-classification-challenge), and worked on it, as seen in the notebook `train_sentiment_model.ipynb`. After a basic data analysis, I tested an initial version of the classifier using logistic regression from sklearn. However, after further testing, I ended up using a bidirectional LSTM neural network in the final version, which provided better accuracy in classifications.
+
+Finally, this trained neural network was integrated with the code from previous stages, where all texts downloaded by `!crawl` are classified, and this classification is subsequently used in searches. For this delivery, the main sources of reference were class materials and the [official TensorFlow documentation](https://www.tensorflow.org/api_docs/python/tf).

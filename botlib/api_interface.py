@@ -4,7 +4,7 @@ import asyncio
 import re
 import datetime
 import json
-from .BotExceptions import InvalidCrypto, FetchError
+from .bot_exceptions import InvalidCrypto, FetchError
 
 
 class ApiInterface:

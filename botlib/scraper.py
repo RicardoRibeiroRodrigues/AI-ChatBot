@@ -5,7 +5,7 @@ import pickle
 import re
 
 
-class Scrapper:
+class Scraper:
     DOCS_PATH = "data/Docs/"
     URLS_PATH = "data/urls.pickle"
     TITLES_PATH = "data/titles.pickle"
@@ -21,43 +21,27 @@ class Scrapper:
             self.urls: list = []
         else:
             print("[INFO] Loading urls...")
-            self.load_urls()
+            self.urls = self.load_pickle(self.URLS_PATH)
 
         if not os.path.exists(self.CONTENTS_PATH):
             self.contents: list = []
         else:
             print("[INFO] Loading contents...")
-            self.load_contents()
+            self.contents = self.load_pickle(self.CONTENTS_PATH)
 
         if not os.path.exists(self.TITLES_PATH):
             self.titles: list = []
         else:
             print("[INFO] Loading titles...")
-            self.load_titles()
+            self.titles = self.load_pickle(self.TITLES_PATH)
 
-    def save_urls(self) -> None:
-        with open(self.URLS_PATH, "wb") as f:
-            pickle.dump(self.urls, f)
+    def load_pickle(self, path: str) -> list:
+        with open(path, "rb") as f:
+            return pickle.load(f)
 
-    def load_contents(self) -> None:
-        with open(self.CONTENTS_PATH, "rb") as f:
-            self.contents = pickle.load(f)
-
-    def save_contents(self) -> None:
-        with open(self.CONTENTS_PATH, "wb") as f:
-            pickle.dump(self.contents, f)
-
-    def load_urls(self) -> None:
-        with open(self.URLS_PATH, "rb") as f:
-            self.urls = pickle.load(f)
-
-    def load_titles(self) -> None:
-        with open(self.TITLES_PATH, "rb") as f:
-            self.titles = pickle.load(f)
-
-    def save_titles(self) -> None:
-        with open(self.TITLES_PATH, "wb") as f:
-            pickle.dump(self.titles, f)
+    def save_pickle(self, path: str, data: list) -> None:
+        with open(path, "wb") as f:
+            pickle.dump(data, f)
 
     def url_to_filename(self, url: str) -> str:
         filename = re.sub(r"(https://)|(http://)", "", url)
@@ -65,10 +49,6 @@ class Scrapper:
         if len(filename) > 255:
             filename = filename[:250]
         return filename + ".txt"
-
-    def save_doc(self, filename: str, content: str) -> None:
-        with open(f"{self.DOCS_PATH}{filename}", "w") as f:
-            f.write(content)
 
     def valid_url(self, url: str) -> bool:
         forbidden_file_formats = (
@@ -94,10 +74,19 @@ class Scrapper:
     def extract_from_soup(self, url: str, soup: BeautifulSoup) -> tuple:
         text = soup.get_text()
         title = soup.title.string
-        self.save_doc(self.url_to_filename(url), text.lower())
-        self.contents.append(text.lower())
+        content = self.remove_blank_lines(text.lower())
+
+        self.save_doc(self.url_to_filename(url), content)
+        self.contents.append(content)
         self.titles.append(str(title))
-        return title, text
+        return title, content
+
+    def remove_blank_lines(self, text: str) -> str:
+        return "\n".join([line for line in text.split("\n") if line.strip()])
+
+    def save_doc(self, filename: str, content: str) -> None:
+        with open(f"{self.DOCS_PATH}{filename}", "w") as f:
+            f.write(content)
 
     async def scrape(self, url: str) -> tuple:
         url_queue = [url]
@@ -137,9 +126,9 @@ class Scrapper:
                             self.titles.pop()
 
         # Data persistence -> Save urls and contents in pickle files
-        self.save_urls()
-        self.save_contents()
-        self.save_titles()
+        self.save_pickle(self.TITLES_PATH, self.titles)
+        self.save_pickle(self.CONTENTS_PATH, self.contents)
+        self.save_pickle(self.URLS_PATH, self.urls)
 
     async def get_content(self, url: str, session) -> BeautifulSoup:
         async with session.get(url) as response:

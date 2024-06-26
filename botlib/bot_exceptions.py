@@ -11,7 +11,8 @@ class InvalidCrypto(Exception):
 class FetchError(Exception):
     def __init__(self):
         super().__init__(
-            """Error fetching data from the api, please check the arguments or try again later.
-                Tip: Check if the crypto existed in the given date range.
+            """
+            Error fetching data from the api, please check the arguments or try again later.
+            Tip: Check if the crypto existed in the given date range.
             """
         )

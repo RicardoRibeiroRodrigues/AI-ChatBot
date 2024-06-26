@@ -3,11 +3,14 @@ from discord.ext import commands
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-from bot_lib.BotHelp import CommandsHelp
-from bot_lib.ApiInterface import ApiInterface
-from bot_lib.scrapper import Scrapper
-from bot_lib.NlpTools import NlpTools
-from bot_lib.BotExceptions import *
+from botlib import (
+    CommandsHelp,
+    ApiInterface,
+    Scraper,
+    NlpTools,
+    InvalidCrypto,
+    FetchError,
+)
 import asyncio
 
 load_dotenv()
@@ -17,28 +20,25 @@ if not API_KEY or not TOKEN:
     raise Exception("Environment variable not set")
 
 N_RESULTS_SEARCH = 12
+MAX_SCRAPER_DOWNLOADS = 25
 intents = discord.Intents().all()
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=CommandsHelp())
-api_inter = ApiInterface(API_KEY)
-scrapper = Scrapper(max_downloads=25)
+api_interface = ApiInterface(API_KEY)
+scrapper = Scraper(max_downloads=MAX_SCRAPER_DOWNLOADS)
 nlp_tools = NlpTools(scrapper)
 
 
 @bot.event
 async def on_ready():
-    guild = discord.utils.get(bot.guilds, name="Servidor de teste")
-    channel = discord.utils.get(guild.text_channels, name="geral")
-    await channel.send("O bot está online!")
+    print(f"Bot is ready! {bot.user}")
 
 
-@commands.dm_only()
 @bot.command(help="Sends a link to the github repo", usage="!source")
 async def source(ctx):
     """
     Command that sends the link for the bot's source code on github.
-    This command is DM only.
     """
-    embed = discord.Embed(title="Link do repositório no github")
+    embed = discord.Embed(title="Github Repository")
     embed.url = "https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot"
     embed.description = "https://github.com/RicardoRibeiroRodrigues/NLP-DiscordBot"
     embed.set_image(
@@ -47,22 +47,19 @@ async def source(ctx):
     await ctx.send(embed=embed)
 
 
-@commands.dm_only()
 @bot.command(help="Sends the bot author's info", usage="!author")
 async def author(ctx):
     """
     Sends a embed with bot author's name, github profile and email.
-    This command is DM only.
     """
     embed = discord.Embed()
-    embed.title = "Autor"
+    embed.title = "Author info"
     embed.description = """
             [Ricardo Ribeiro Rodrigues](https://github.com/RicardoRibeiroRodrigues) - ricardorr7@al.insper.edu.br
         """
     await ctx.send(embed=embed)
 
 
-@commands.dm_only()
 @bot.command(
     help="Command to list info on a specific cryptocurrency.",
     usage="!run BTC 2020-01-01.2021-01-01",
@@ -71,7 +68,6 @@ async def run(ctx, symbol: str, interval: str = None):
     """
     This command uses the **coincap API** to fetch data on a specific cryptocurrency.
     The data is then to the user on a discord embed with a historical price graph and basic info on the crypto.
-    This command is DM only.
 
     Parameters:
         :symbol: The symbol of the cryptocurrency to fetch data on, must be on the crypto typical format (e.g. BTC, ETH, XRP, etc.)
@@ -84,10 +80,10 @@ async def run(ctx, symbol: str, interval: str = None):
     """
     embed = discord.Embed(title=f"Information on {symbol}")
 
-    if api_inter.validate_symbol(symbol):
+    if api_interface.validate_symbol(symbol):
         first_date = None
         second_date = None
-        if interval and api_inter.validate_interval(interval):
+        if interval and api_interface.validate_interval(interval):
             first, second = interval.split(".")
             first_date = datetime.strptime(first, "%Y-%m-%d")
             second_date = datetime.strptime(second, "%Y-%m-%d")
@@ -96,7 +92,7 @@ async def run(ctx, symbol: str, interval: str = None):
                 first_date, second_date = second_date, first_date
         try:
             async with ctx.typing():
-                basic_info, img_path = await api_inter.fetch_data(
+                basic_info, img_path = await api_interface.fetch_data(
                     symbol, first_date, second_date
                 )
 
@@ -129,7 +125,6 @@ async def run(ctx, symbol: str, interval: str = None):
         await ctx.send("Invalid symbol, see the usage of the command with !help run")
 
 
-@commands.dm_only()
 @bot.command(
     help="Command to crawl internet and save the content of a site in the database",
     usage="!crawl <url>",
@@ -138,7 +133,6 @@ async def crawl(ctx, url: str):
     """
     This command receives a url and fetches the content of the page.
     The content is then processed and saved in the database.
-    This command is DM only.
 
     Parameters:
         :url: The url of the page to be crawled.
@@ -165,7 +159,6 @@ async def crawl(ctx, url: str):
     await ctx.send(f"Finished crawling, crawled {len(contents)} pages!")
 
 
-@commands.dm_only()
 @bot.command(
     help="Command to search for a specific word in the database",
     usage="!search <query>",
@@ -174,7 +167,6 @@ async def search(ctx, *query):
     """
     This command receives a query and searches for it in the database.
     Returns the documents where the query was found, sorted by TF-IDF score, filtered by negative amount.
-    This command is DM only.
 
     Parameters:
         :query: The query to be searched.
@@ -219,7 +211,6 @@ async def search(ctx, *query):
     await ctx.send(embed=embed)
 
 
-@commands.dm_only()
 @bot.command(
     help="Command to search for a term using wordnet", usage="!wnsearch <word>"
 )
@@ -227,7 +218,6 @@ async def wn_search(ctx, word: str, th=None):
     """
     This receives a word and searches for it in the database, using the wup_similarity for searching for similar terms.
     Returns the most similar term and the document where it was found, filtered by negative amount.
-    This command is DM only.
 
     Parameters:
         :word: The word to be searched.
@@ -274,7 +264,6 @@ async def wn_search(ctx, word: str, th=None):
     await ctx.send(embed=embed)
 
 
-@commands.dm_only()
 @bot.command(
     help="Command to generate content based on the current scrapped content",
     usage="!generate <query>",
@@ -282,7 +271,6 @@ async def wn_search(ctx, word: str, th=None):
 async def generate(ctx, *query):
     """
     This command receives a query and generates a text based on the current scrapped content.
-    This command is DM only.
 
     Parameters:
         :query: The query to be searched.
@@ -290,14 +278,15 @@ async def generate(ctx, *query):
     **Example usage:**
         !generate cloud computing
     """
-    generated_text = nlp_tools.generate_text(" ".join(query), 'inhouse')
+    generated_text = nlp_tools.generate_text(" ".join(query), "inhouse")
     if generated_text is None:
-        await ctx.send("Could not find any documents with the query, please try another query.")
+        await ctx.send(
+            "Could not find any documents with the query, please try another query."
+        )
         return
     await ctx.send(generated_text)
 
 
-@commands.dm_only()
 @bot.command(
     help="Command to generate content based on the current scrapped content using GPT-2",
     usage="!gptgenerate <query>",
@@ -305,7 +294,6 @@ async def generate(ctx, *query):
 async def gptgenerate(ctx, *query):
     """
     This command receives a query and generates a text based on the current scrapped content, using GPT-2 pre-trained.
-    This command is DM only.
 
     Parameters:
         :query: The query to be searched.
@@ -316,12 +304,16 @@ async def gptgenerate(ctx, *query):
     async with ctx.typing():
         await ctx.send("Generating text, it may take a while, please wait....")
         loop = asyncio.get_event_loop()
-        generated_text = await loop.run_in_executor(None, nlp_tools.generate_text, " ".join(query), 'gpt')
-        # generated_text = nlp_tools.generate_text(" ".join(query), 'gpt')
+        generated_text = await loop.run_in_executor(
+            None, nlp_tools.generate_text, " ".join(query), "gpt"
+        )
         if generated_text is None:
-            await ctx.send("Could not find any documents with the query, please try another query.")
+            await ctx.send(
+                "Could not find any documents with the query, please try another query."
+            )
             return
     await ctx.send(generated_text)
+
 
 @bot.event
 async def on_command_error(ctx, exception):

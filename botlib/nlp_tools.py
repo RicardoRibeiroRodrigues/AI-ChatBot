@@ -4,7 +4,7 @@ import json
 from nltk.corpus import wordnet
 from sklearn.feature_extraction.text import TfidfVectorizer
 import tensorflow as tf
-from bot_lib.ContentGenerator import ContentGenerator
+from botlib.content_generator import ContentGenerator
 
 
 class NlpTools:
@@ -125,7 +125,7 @@ class NlpTools:
         # Using the value[1] because the value[0] is the positive confidence, and we need the negative one
         classification = [self._convert_scale(value[1]) for value in classification]
         return classification
-    
+
     def generate_text(self, query: str, model: str) -> str:
         docs = self.search(query)
         if not docs:
@@ -134,15 +134,13 @@ class NlpTools:
             print(docs)
             if docs is None:
                 return None
-    
+
         docs = max(docs, key=lambda x: docs[x][0])
-        if model == 'inhouse':
-            content = self.scrapper_ref.contents[int(docs)]
-            processed_string = re.sub(r'\s+', ' ', content)
+        content = self.scrapper_ref.contents[int(docs)]
+        processed_string = re.sub(r"\s+", " ", content)
+
+        if model == "inhouse":
             res = self.content_generator.generate_content(processed_string)
-        elif model == 'gpt':
-            content = self.scrapper_ref.contents[int(docs)]
-            processed_string = re.sub(r'\s+', ' ', content)
+        elif model == "gpt":
             res = self.content_generator.gpt_generate(processed_string)
         return res
-    
